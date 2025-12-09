@@ -1,0 +1,67 @@
+name: CI/CD Deployment to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy-backend:
+    name: Build and Deploy Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Backend code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build Backend
+        run: |
+          echo "Building backend..."
+          # Example:
+          # npm install
+          # npm run build
+          # or your backend build commands here
+
+      - name: Deploy Backend
+        run: |
+          echo "Deploying backend..."
+          # Example deploy commands here:
+          # aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment
+          # or any other AWS deployment CLI commands you use
+
+  build-and-deploy-frontend:
+    name: Build and Deploy Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Frontend code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build Frontend
+        run: |
+          echo "Building frontend..."
+          # Example:
+          # npm install
+          # npm run build
+          # or your frontend build commands here
+
+      - name: Deploy Frontend
+        run: |
+          echo "Deploying frontend..."
+          # Example AWS S3 sync command:
+          aws s3 sync build/ s3://your-frontend-bucket-name --delete
+          # Replace 'your-frontend-bucket-name' with your actual S3 bucket
