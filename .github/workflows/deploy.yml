@@ -1,52 +1,93 @@
-name: Frontend CI/CD Deployment to AWS
-
-on:
+name: Frontend CI/CD Deployment to AWSon:
   push:
     branches:
       - main
       - Fargate-FE
 
 env:
-  # Default region if you do NOT want to set secrets.AWS_REGION.
-  # Recommended: set secrets.AWS_REGION to a valid region (e.g. us-east-1) and leave this as-is.
   AWS_REGION: us-east-1
   ECS_CLUSTER: brentaneal-cluster
-  FRONTEND_TASK_DEF: brentaneal-frontend
-  BACKEND_TASK_DEF: brentaneal-backend
   FRONTEND_SERVICE: brentaneal-frontend-service
-  BACKEND_SERVICE: brentaneal-backend-service
 
 jobs:
   build-and-deploy-frontend:
-    name: Build and Deploy Frontend
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Frontend code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Setup Node (pin compatible version)
+        uses: actions/setup-node@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # Prefer using the secret; if you have not set it, the action will use env.AWS_REGION above.
-          aws-region: ${{ secrets.AWS_REGION }}
+          node-version: '20.19.0'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            Frontend01/package-lock.json
 
-      - name: Build Frontend
+      - name: Show Node and npm versions
         run: |
-          echo "Installing and building frontend..."
-          npm ci
-          npm run build
+          node -v
+          npm -v
+
+      - name: List files for debugging
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Files in repo root:"
+          ls -la
+          echo "Files in Frontend01 (if exists):"
+          ls -la Frontend01 || echo "No Frontend01 folder"
+          echo "Searching for package.json and lockfiles up to depth 2:"
+          find . -maxdepth 2 -name "package*.json" -print
+
+      # TEMPORARY WORKAROUND: fall back to npm install if no lockfile is present
+      - name: Build Frontend (lockfile-aware with fallback)
+        run: |
+          set -euo pipefail
+
+          build_in_dir () {
+            local dir="${1:-.}"
+            echo "Building in: $dir"
+            cd "$dir"
+            if [ -f package-lock.json ]; then
+              echo "Lockfile found. Running: npm ci"
+              npm ci || (echo "npm ci failed, falling back to npm install"; npm install)
+            else
+              echo "No lockfile found. Running: npm install"
+              npm install
+            fi
+            echo "Running: npm run build"
+            npm run build
+          }
+
+          if [ -f package.json ]; then
+            # Frontend likely at repo root
+            build_in_dir "."
+          elif [ -f Frontend01/package.json ]; then
+            # Frontend located in Frontend01 subfolder
+            build_in_dir "Frontend01"
+          else
+            echo "Error: No package.json found in repo root or Frontend01." >&2
+            exit 1
+          fi
+
+      # OPTIONAL: Configure AWS credentials (uncomment if deploying from GH Actions)
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.A_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
 
       - name: Deploy Frontend — force new ECS deployment
         env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_REGION: ${{ secrets.AWS_REGION || env.AWS_REGION }}
           ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
           FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
         run: |
-          # Ensure AWS_REGION is set (either by secret or default env above)
           if [ -z "$AWS_REGION" ]; then
-            echo "ERROR: AWS_REGION is not set. Set secrets.AWS_REGION or update env.AWS_REGION in the workflow." >&2
+            echo "ERROR: AWS_REGION is not set." >&2
             exit 1
           fi
 
