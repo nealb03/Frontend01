@@ -1,10 +1,10 @@
 <<<<<<< HEAD
-testing
+
 
 # Fargate_Frontend
 =======
 <<<<<<< HEAD
-this is a test.
+
 
 # Frontend01
 Frontend01
