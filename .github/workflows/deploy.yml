@@ -1,13 +1,13 @@
-name: Frontend CI/CD Deployment to AWS
+name: Frontend CI Deployment to AWS
 
 on:
- push:
+  push:
     branches:
       - main
       - Fargate-FE
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-east-
   ECS_CLUSTER: brentaneal-cluster
   FRONTEND_SERVICE: brentaneal-frontend-service
 
@@ -23,35 +23,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.19.0'
+          cache: 'npm'
+          cache-dependency-path: Frontend01/package-lock.json
 
-      - name: Build Frontend
+      - name: Build Frontend (in Frontend01)
+        working-directory: Frontend01
         run: |
-          echo "Installing and building frontend..."
+          echo "Installing dependencies and building frontend in Frontend01..."
+          npm ci
+          npm run build
 
-          # If your frontend lives in the repo root
-          if [ -f package.json ]; then
-            echo "Found package.json in repo root. Building in repo root..."
-            npm install
-            npm run build
-
-          # Or if your frontend lives in a Frontend01 subfolder
-          elif [ -f Frontend01/package.json ]; then
-            echo "Found package.json in Frontend01. Building in Frontend01..."
-            cd Frontend01
-            npm install
-            npm run build
-
-          else
-            echo "Error: No package.json found in repo root or Frontend01." >&2
-            exit 1
-          fi
-
-      - name: Deploy Frontend — force new ECS deployment
+      - name: Deploy Frontend - force new ECS deployment
         env:
           AWS_REGION: ${{ secrets.AWS_REGION || env.AWS_REGION }}
           ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
           FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
-        run: |
+        run |
           if [ -z "$AWS_REGION" ]; then
             echo "ERROR: AWS_REGION is not set." >&2
             exit 1
