@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "date": "2025-10-08",
+    "temperatureC": 20,
+    "summary": "Mild"
+  },
+  {
+    "id": 2,
+    "date": "2025-10-09",
+    "temperatureC": 22,
+    "summary": "Warm"
+  },
+  {
+    "id": 3,
+    "date": "2025-10-10",
+    "temperatureC": 18,
+    "summary": "Cool"
+  },
+  {
+    "id": 4,
+    "date": "2025-10-11",
+    "temperatureC": 25,
+    "summary": "Hot"
+  },
+  {
+    "id": 5,
+    "date": "2025-10-12",
+    "temperatureC": 15,
+    "summary": "Chilly"
+  },
+  {
+    "id": 6,
+    "date": "2025-10-13",
+    "temperatureC": 30,
+    "summary": "Scorching"
+  },
+  {
+    "id": 7,
+    "date": "2025-10-14",
+    "temperatureC": 28,
+    "summary": "Sunny"
+  }
+]

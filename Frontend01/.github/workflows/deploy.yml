@@ -1,0 +1,58 @@
+name: Frontend CI/CD Deployment to AWS
+
+on:
+  push:
+    branches:
+      - main
+      - Fargate-FE
+
+env:
+  # Default region if you do NOT want to set secrets.AWS_REGION.
+  # Recommended: set secrets.AWS_REGION to a valid region (e.g. us-east-1) and leave this as-is.
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: brentaneal-cluster
+  FRONTEND_TASK_DEF: brentaneal-frontend
+  BACKEND_TASK_DEF: brentaneal-backend
+  FRONTEND_SERVICE: brentaneal-frontend-service
+  BACKEND_SERVICE: brentaneal-backend-service
+
+jobs:
+  build-and-deploy-frontend:
+    name: Build and Deploy Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Frontend code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Prefer using the secret; if you have not set it, the action will use env.AWS_REGION above.
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build Frontend
+        run: |
+          echo "Installing and building frontend..."
+          npm ci
+          npm run build
+
+      - name: Deploy Frontend — force new ECS deployment
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
+          FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
+        run: |
+          # Ensure AWS_REGION is set (either by secret or default env above)
+          if [ -z "$AWS_REGION" ]; then
+            echo "ERROR: AWS_REGION is not set. Set secrets.AWS_REGION or update env.AWS_REGION in the workflow." >&2
+            exit 1
+          fi
+
+          echo "Forcing new deployment for $FRONTEND_SERVICE in cluster $ECS_CLUSTER (region $AWS_REGION)..."
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$FRONTEND_SERVICE" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
