@@ -30,7 +30,7 @@ jobs:
         working-directory: Frontend01
         run: |
           echo "Installing dependencies and building frontend in Frontend01..."
-          npm ci
+          npm install
           npm run build
 
       - name: Deploy Frontend — force new ECS deployment
