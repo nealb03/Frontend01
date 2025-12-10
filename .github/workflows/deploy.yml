@@ -1,5 +1,7 @@
-name: Frontend CI/CD Deployment to AWSon:
-  push:
+name: Frontend CI/CD Deployment to AWS
+
+on:
+ push:
     branches:
       - main
       - Fargate-FE
@@ -15,70 +17,34 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node (pin compatible version)
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20.19.0'
-          cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            Frontend01/package-lock.json
 
-      - name: Show Node and npm versions
+      - name: Build Frontend
         run: |
-          node -v
-          npm -v
+          echo "Installing and building frontend..."
 
-      - name: List files for debugging
-        run: |
-          echo "PWD: $(pwd)"
-          echo "Files in repo root:"
-          ls -la
-          echo "Files in Frontend01 (if exists):"
-          ls -la Frontend01 || echo "No Frontend01 folder"
-          echo "Searching for package.json and lockfiles up to depth 2:"
-          find . -maxdepth 2 -name "package*.json" -print
-
-      # TEMPORARY WORKAROUND: fall back to npm install if no lockfile is present
-      - name: Build Frontend (lockfile-aware with fallback)
-        run: |
-          set -euo pipefail
-
-          build_in_dir () {
-            local dir="${1:-.}"
-            echo "Building in: $dir"
-            cd "$dir"
-            if [ -f package-lock.json ]; then
-              echo "Lockfile found. Running: npm ci"
-              npm ci || (echo "npm ci failed, falling back to npm install"; npm install)
-            else
-              echo "No lockfile found. Running: npm install"
-              npm install
-            fi
-            echo "Running: npm run build"
-            npm run build
-          }
-
+          # If your frontend lives in the repo root
           if [ -f package.json ]; then
-            # Frontend likely at repo root
-            build_in_dir "."
+            echo "Found package.json in repo root. Building in repo root..."
+            npm install
+            npm run build
+
+          # Or if your frontend lives in a Frontend01 subfolder
           elif [ -f Frontend01/package.json ]; then
-            # Frontend located in Frontend01 subfolder
-            build_in_dir "Frontend01"
+            echo "Found package.json in Frontend01. Building in Frontend01..."
+            cd Frontend01
+            npm install
+            npm run build
+
           else
             echo "Error: No package.json found in repo root or Frontend01." >&2
             exit 1
           fi
-
-      # OPTIONAL: Configure AWS credentials (uncomment if deploying from GH Actions)
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.A_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
 
       - name: Deploy Frontend — force new ECS deployment
         env:
