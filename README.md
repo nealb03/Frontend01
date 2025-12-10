@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-this is a test
+testing
 
 # Fargate_Frontend
 =======
