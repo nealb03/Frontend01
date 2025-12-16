@@ -11,6 +11,11 @@ env:
   ECS_CLUSTER: brentaneal-cluster
   FRONTEND_SERVICE: brentaneal-frontend-service
 
+# IMPORTANT: enable OIDC token and repo access
+permissions:
+  id-token: write     # needed for GitHub OIDC
+  contents: read      # to checkout the code
+
 jobs:
   build-and-deploy-frontend:
     runs-on: ubuntu-latest
@@ -34,16 +39,16 @@ jobs:
           npm run build
 
       # THIS STEP MUST COME BEFORE THE DEPLOY STEP
-      - name: Configure AWS credentials
+      # Now using OIDC + IAM role instead of access keys
+      - name: Configure AWS credentials via GitHub OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::288761763536:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Frontend — force new ECS deployment
         env:
-          AWS_REGION: ${{ secrets.AWS_REGION || env.AWS_REGION }}
+          AWS_REGION: ${{ env.AWS_REGION }}
           ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
           FRONTEND_SERVICE: ${{ env.FRONTEND_SERVICE }}
         run: |
