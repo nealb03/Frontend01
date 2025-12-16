@@ -74,7 +74,8 @@ table {
   color: rgba(255, 255, 255, 0.87);
 }
 
-th, td {
+th,
+td {
   border: 1px solid #444;
   padding: 8px 12px;
   text-align: left;
@@ -110,7 +111,8 @@ tbody tr:nth-child(even) {
   table {
     color: #213547;
   }
-  th, td {
+  th,
+  td {
     border-color: #ccc;
   }
   thead {
@@ -118,5 +120,65 @@ tbody tr:nth-child(even) {
   }
   tbody tr:nth-child(even) {
     background-color: #f9f9f9;
+  }
+}
+
+/* ---------- RESPONSIVE BREAKPOINTS (ADD BELOW) ---------- */
+
+/* Small mobile devices (up to 480px) */
+@media (max-width: 480px) {
+  body {
+    padding-top: 20px;
+    padding-inline: 10px; /* add a bit of side padding */
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  button {
+    width: 100%; /* full-width buttons on small screens */
+  }
+}
+
+/* Tablets / small laptops (481px–768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  body {
+    padding-top: 30px;
+    padding-inline: 20px;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+}
+
+/* Laptops / desktops (769px–1200px) */
+@media (min-width: 769px) and (max-width: 1200px) {
+  body {
+    padding-top: 40px;
+    padding-inline: 40px;
+  }
+
+  h1 {
+    font-size: 3rem;
+  }
+}
+
+/* Large desktops (1201px and up) */
+@media (min-width: 1201px) {
+  body {
+    padding-top: 60px;
+    padding-inline: 80px;
+    max-width: 1200px;
+    margin: 0 auto; /* center content on big screens */
   }
 }
